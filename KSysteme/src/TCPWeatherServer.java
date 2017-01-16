@@ -59,14 +59,15 @@ class TCPWeatherServer
                     outStream.writeUTF(ausgabe);
                     outStream.flush();
 
-                } catch (IOException ex) { logout = true; }
+                } catch (IOException ioe) { logout = true; }
             }
             if(socket != null) socket.close();
             if(inStream != null) inStream.close();
             if(outStream != null) outStream.close();
-        } catch (IOException ex) {
 
-            System.out.println(ex);
+        } catch (IOException ioe) {
+
+            System.out.println(ioe.getMessage());
         }
     }
 
@@ -87,7 +88,7 @@ class TCPWeatherServer
             fullWeather = weather.substring(weather.indexOf("description") + 14, weather.indexOf("\",\"icon"));
             fullWeather += ", " + String.format("%.2f", Float.parseFloat(sb.substring(sb.indexOf("{\"temp\":") + 8, sb.indexOf(",\"temp_min")))) + "°C";
 
-        } catch (IOException e) {
+        } catch (IOException ioe) {
 
             switch (id) {
 
@@ -107,6 +108,8 @@ class TCPWeatherServer
                     fullWeather = "Neblig, 24°C";
                     break;
             }
+
+            System.out.println(ioe.getMessage());
         }
 
         return fullWeather;

@@ -2,28 +2,25 @@ import java.net.*;
 import java.io.*;
 
 public class TCPWeatherClient
-{  private Socket socket              = null;
-    private DataInputStream  console   = null;
-    private DataOutputStream streamOut = null;
-    private  DataInputStream inStream = null;
+{
+    private Socket              socket    = null;
+    private DataInputStream     console   = null;
+    private DataInputStream     inStream  = null;
+    private DataOutputStream    outStream = null;
 
-    public TCPWeatherClient(String serverName, int serverPort)
+    public TCPWeatherClient(int serverPort)
     {
 
-        System.out.println("Establishing connection. Please wait ...");
+        try {
+            socket = new Socket("localhost", serverPort);
+            System.out.println("Verbunden: " + socket);
 
-        BufferedReader inFromServer = null;
-        try
-        {  socket = new Socket(serverName, serverPort);
-            System.out.println("Connected: " + socket);
-            start();
-            inFromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        }
-        catch(UnknownHostException uhe)
-        {  System.out.println("Host unknown: " + uhe.getMessage());
+            console = new DataInputStream(System.in);
+            outStream = new DataOutputStream(socket.getOutputStream());
+            inStream = new DataInputStream(socket.getInputStream());
         }
         catch(IOException ioe)
-        {  System.out.println("Unexpected exception: " + ioe.getMessage());
+        {  System.out.println(ioe.getMessage());
         }
         String line = "";
 
@@ -35,36 +32,32 @@ public class TCPWeatherClient
                 System.out.print("Stadt: ");
                 line = console.readLine();
 
-                streamOut.writeUTF(line);
-                streamOut.flush();
+                outStream.writeUTF(line);
+                outStream.flush();
                 String serverResponse = inStream.readUTF();
-                System.out.println("Client fragt nach Wetter in " + line + ", Server antwortet \"" + serverResponse + "\"");
+
+                if(!line.equals("logout"))
+                    System.out.println("Client fragt nach Wetter in " + line + ", Server antwortet \"" + serverResponse + "\"");
 
             } catch(IOException ioe) {
 
-                System.out.println("Sending error: " + ioe.getMessage());
+                System.out.println(ioe.getMessage());
             }
         }
-    }
 
-    public void start() throws IOException
-    {  console   = new DataInputStream(System.in);
-        streamOut = new DataOutputStream(socket.getOutputStream());
-        inStream = new DataInputStream(socket.getInputStream());
-    }
-    public void stop()
-    {  try
-    {  if (console   != null)  console.close();
-        if (streamOut != null)  streamOut.close();
-        if (socket    != null)  socket.close();
-    }
-    catch(IOException ioe)
-    {  System.out.println("Error closing ...");
-    }
+        try {
+
+            if (console != null) console.close();
+            if (outStream != null) outStream.close();
+            if (socket != null) socket.close();
+
+        } catch (IOException ex) {
+
+            System.out.println(ex.getMessage());
+        }
     }
     public static void main(String args[])
-    {  TCPWeatherClient client = null;
-
-            client = new TCPWeatherClient("localhost", 50000);
+    {
+        TCPWeatherClient client = new TCPWeatherClient(50000);
     }
 }
