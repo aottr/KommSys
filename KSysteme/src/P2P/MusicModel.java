@@ -54,9 +54,15 @@ public class MusicModel {
      * Setter des Titels
      * @param value Titel als String
      */
-    public  void setTitle(String value) {
+    public void setTitle(String value) {
 
         // Behalten des alten Wertes falls leer
         _title = value.trim().equals("") ? _title : value;
+    }
+
+    @Override
+    public String toString() {
+
+        return _artist + ";" + _title + ";";
     }
 }

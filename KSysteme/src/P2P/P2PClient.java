@@ -145,10 +145,13 @@ public class P2PClient {
 
     public static void main( String[] args )
     {
+        DataInputStream     console   = new DataInputStream(System.in);
+
         try
         {
+            String prt = console.readLine();
 
-            P2PClient mp = new P2PClient(50001);
+            P2PClient mp = new P2PClient(Integer.valueOf(prt));
 
             boolean stop = false;
 
