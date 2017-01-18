@@ -60,6 +60,10 @@ public class MusicModel {
         _title = value.trim().equals("") ? _title : value;
     }
 
+    /**
+     * Überschriebene toString-Methode. Gibt das jeweilige Musikstück als CSV zurück
+     * @return Lied als CSV in der Form: Interpret;Titel;
+     */
     @Override
     public String toString() {
 
