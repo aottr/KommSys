@@ -52,10 +52,10 @@ public class TCPWeatherClient
         String line = "";
 
         // While-Schleife mit Abbruchbedingung: Eingabe logout.
-        while (!line.equals("logout"))
+        while (!line.equals("logout") && !line.equals(".end"))
         {
             try {
-                System.out.print("Stadt: ");
+                System.out.print("Stadt oder Befehl: ");
                 line = console.readLine();  // Einlesen der Benutzereingabe
 
                 // Senden der Eingabe an den Server über ausgehenden Stream
@@ -66,7 +66,7 @@ public class TCPWeatherClient
                 String serverResponse = inStream.readUTF();
 
                 // Ausgabe wie in Aufgabestellung, sofern nicht ausgeloggt wurde.
-                if(!line.equals("logout"))
+                if(!line.equals("logout") && !line.equals(".end"))
                     System.out.println("Client fragt nach Wetter in " + line + ", Server antwortet \"" + serverResponse + "\"");
 
             } catch(IOException ioe) {

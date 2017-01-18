@@ -44,66 +44,82 @@ public class TCPWeatherServer
             server = new ServerSocket(port);
             System.out.println("Server started:" + server);
 
-            // Akzeptieren einer ankommenden Anfrage
-            socket = server.accept();
-            System.out.println("Client accepted: " + socket);
+            boolean end = false;
 
-            // Über diese beiden Datenströme können geschieht die Ein- und Ausgabe von Nachrichten
-            inStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-            outStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+            while(!end) {
+                // Akzeptieren einer ankommenden Anfrage
+                socket = server.accept();
+                System.out.println("Client accepted: " + socket);
 
-            /**
-             *  Hilfsvariable zur Versicherung der Abbruchbedingung unserer while-Schleife, in der
-             *  nacheinander und beliebig oft eingehende Anfragen bearbeitet werden.
-             *  Hätte auch mit simplen break der While-Schleife gelöst werden können, so kann der
-             *  Abbruch später abgefragt werden. Evtl. zur Fehlerbehebung o.ä.
-             */
-            boolean logout = false;
+                // Über diese beiden Datenströme können geschieht die Ein- und Ausgabe von Nachrichten
+                inStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
+                outStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
 
-            while (!logout) {
+                /**
+                 *  Hilfsvariable zur Versicherung der Abbruchbedingung unserer while-Schleife, in der
+                 *  nacheinander und beliebig oft eingehende Anfragen bearbeitet werden.
+                 *  Hätte auch mit simplen break der While-Schleife gelöst werden können, so kann der
+                 *  Abbruch später abgefragt werden. Evtl. zur Fehlerbehebung o.ä.
+                 */
+                boolean logout = false;
 
-                try {
+                while (!logout) {
 
-                    // Lesen der Benutzereingabe aus dem Stream
-                    String userInput = inStream.readUTF();
-                    System.out.println("Received: " + userInput);
-                    String ausgabe = "";
+                    try {
 
-                    /**
-                     * Eingabe wird zur Nichtbeachtung der Groß- und Kleinschreibung transformiert und
-                     * abgeglichen. Der Aufruf der Methode liest die API simpel aus, auf ein richtiges Parsing
-                     * wurde aufgrund der "Simplizität" dieser Anwendung verzichtet.
-                     */
-                    switch (userInput.toLowerCase()) {
+                        // Lesen der Benutzereingabe aus dem Stream
+                        String userInput = inStream.readUTF();
+                        System.out.println("Received: " + userInput);
+                        String ausgabe = "";
 
-                        case "leipzig":
-                            ausgabe = getWeatherFromOWMID(2879139);
-                            break;
-                        case "stuttgart":
-                            ausgabe = getWeatherFromOWMID(2825297);
-                            break;
-                        case "hamburg":
-                            ausgabe = getWeatherFromOWMID(2911298);
-                            break;
-                        case "erfurt":
-                            ausgabe = getWeatherFromOWMID(2929670);
-                            break;
-                        case "jena":
-                            ausgabe = getWeatherFromOWMID(2895044);
-                            break;
-                        case "logout":
-                            logout = true;
-                            break;
-                        default:
-                            ausgabe = "could not find city";
-                            break;
-                    }
+                        /**
+                         * Eingabe wird zur Nichtbeachtung der Groß- und Kleinschreibung transformiert und
+                         * abgeglichen. Der Aufruf der Methode liest die API simpel aus, auf ein richtiges Parsing
+                         * wurde aufgrund der "Simplizität" dieser Anwendung verzichtet.
+                         */
+                        switch (userInput.toLowerCase()) {
 
-                    // Senden der Wetterdaten an den Client.
-                    outStream.writeUTF(ausgabe);
-                    outStream.flush(); // - schickt die Bytes im Buffer ab.
+                            case "leipzig":
+                                ausgabe = getWeatherFromOWMID(2879139);
+                                System.out.println("Get Weatherdata for: " + userInput);
+                                break;
+                            case "stuttgart":
+                                ausgabe = getWeatherFromOWMID(2825297);
+                                System.out.println("Get Weatherdata for: " + userInput);
+                                break;
+                            case "hamburg":
+                                ausgabe = getWeatherFromOWMID(2911298);
+                                System.out.println("Get Weatherdata for: " + userInput);
+                                break;
+                            case "erfurt":
+                                ausgabe = getWeatherFromOWMID(2929670);
+                                System.out.println("Get Weatherdata for: " + userInput);
+                                break;
+                            case "jena":
+                                ausgabe = getWeatherFromOWMID(2895044);
+                                System.out.println("Get Weatherdata for: " + userInput);
+                                break;
+                            case "logout":
+                                logout = true;
+                                System.out.println("user logged out");
+                                break;
+                            case ".end":
+                                end = true;
+                                logout = true;
+                                break;
+                            default:
+                                ausgabe = "could not find city or command";
+                                break;
+                        }
 
-                } catch (IOException ioe) { logout = true; } // Logout bei einem Fehler
+                        // Senden der Wetterdaten an den Client.
+                        outStream.writeUTF(ausgabe);
+                        outStream.flush(); // - schickt die Bytes im Buffer ab.
+
+                    } catch (IOException ioe) {
+                        logout = true;
+                    } // Logout bei einem Fehler
+                }
             }
             // Schließen aller Streams und Freigabe der Ports
             if(socket != null) socket.close();
@@ -140,11 +156,11 @@ public class TCPWeatherServer
             in.close();
 
             // "Parsen" des Strings um Wetterzustand und aktuelle Temperatur (<2h genau) aus dem String zu filtern.
-            String weather = sb.substring(sb.indexOf("weather"), sb.indexOf("clouds"));
+            String weather = sb.substring(sb.indexOf(",\"weather\""), sb.indexOf(",\"clouds\""));
             fullWeather = weather.substring(weather.indexOf("description") + 14, weather.indexOf("\",\"icon"));
             fullWeather += ", " + String.format("%.2f", Float.parseFloat(sb.substring(sb.indexOf("{\"temp\":") + 8, sb.indexOf(",\"temp_min")))) + "°C";
 
-        } catch (IOException ioe) {
+        } catch (Exception ioe) {
 
             switch (id) {
 
@@ -155,7 +171,7 @@ public class TCPWeatherServer
                     fullWeather = "Sonnig, 23°C";
                     break;
                 case 2911298:
-                    fullWeather = "Windig,, 18°C";
+                    fullWeather = "Windig, 18°C";
                     break;
                 case 2929670:
                     fullWeather = "Regen, 19°C";
